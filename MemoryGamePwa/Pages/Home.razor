@@ -6,11 +6,18 @@
     <div class="card text-center mx-auto" style="max-width: 400px;">
         <div class="card-body">
             <h5 class="card-title">Select number of pieces</h5>
-            <div class="d-grid gap-2">
-                <button class="btn btn-primary" @onclick="() => StartGame(12)">12</button>
-                <button class="btn btn-primary" @onclick="() => StartGame(18)">18</button>
-                <button class="btn btn-primary" @onclick="() => StartGame(24)">24</button>
-            </div>
+            @if (!IsGameStarted)
+            {
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" @onclick="() => StartGame(12)">12</button>
+                    <button class="btn btn-primary" @onclick="() => StartGame(18)">18</button>
+                    <button class="btn btn-primary" @onclick="() => StartGame(24)">24</button>
+                </div>
+            }
+            @if (IsGameStarted)
+            {
+                <button class="btn btn-primary mt-3" @onclick="ResetGame">New Game</button>
+            }
         </div>
     </div>
 
@@ -32,13 +39,21 @@
     }
 </div>
 
-@code {
-    private int? selectedPieces = null;
+    @code {
+        private int? selectedPieces = null;
+        public bool IsGameStarted => selectedPieces.HasValue;
+
         private List<int> pieceIndices = new();
 
-    private void StartGame(int count)
-    {
-        selectedPieces = count;
-        pieceIndices = System.Linq.Enumerable.Range(0, count).ToList();
+        private void StartGame(int count)
+        {
+            selectedPieces = count;
+            pieceIndices = System.Linq.Enumerable.Range(0, count).ToList();
+        }
+
+        private void ResetGame()
+        {
+            selectedPieces = null;
+            pieceIndices.Clear();
+        }
     }
-}
