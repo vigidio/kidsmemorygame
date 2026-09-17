@@ -17,14 +17,28 @@
     @if (selectedPieces != null)
     {
         <p class="mt-3">Game starting with @selectedPieces pieces.</p>
+        <div class="row">
+            @foreach (var idx in pieceIndices)
+            {
+                <div class="col-2 mb-3">
+                    <div class="card text-center" style="width:100px; height:140px;">
+                        <div class="card-body d-flex align-items-center justify-content-center" style="background-color:#6c757d;">
+                            <!-- Back side placeholder -->
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
     }
 </div>
 
 @code {
     private int? selectedPieces = null;
+        private List<int> pieceIndices = new();
 
     private void StartGame(int count)
     {
         selectedPieces = count;
+        pieceIndices = System.Linq.Enumerable.Range(0, count).ToList();
     }
 }
