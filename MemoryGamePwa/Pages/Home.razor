@@ -3,57 +3,107 @@
 <PageTitle>Home</PageTitle>
 
 <div class="container mt-5">
-    <div class="card text-center mx-auto" style="max-width: 400px;">
-        <div class="card-body">
-            <h5 class="card-title">Select number of pieces</h5>
-            @if (!IsGameStarted)
-            {
-                <div class="d-grid gap-2">
-                    <button class="btn btn-primary" @onclick="() => StartGame(12)">12</button>
-                    <button class="btn btn-primary" @onclick="() => StartGame(18)">18</button>
-                    <button class="btn btn-primary" @onclick="() => StartGame(24)">24</button>
-                </div>
-            }
-            @if (IsGameStarted)
-            {
-                <button class="btn btn-primary mt-3" @onclick="ResetGame">New Game</button>
-            }
+  <div class="card text-center mx-auto" style="max-width:400px;">
+    <div class="card-body">
+      <h5 class="card-title">Select number of pieces</h5>
+      @if (!IsGameStarted)
+      {
+        <div class="d-grid gap-2">
+          <button class="btn btn-primary" @onclick="() => StartGame(12)">12</button>
+          <button class="btn btn-primary" @onclick="() => StartGame(18)">18</button>
+          <button class="btn btn-primary" @onclick="() => StartGame(24)">24</button>
         </div>
+      }
+      @if (IsGameStarted)
+      {
+          <button class="btn btn-primary mt-3" @onclick="ResetGame">New Game</button>
+      }
     </div>
+  </div>
 
-    @if (selectedPieces != null)
-    {
-        <p class="mt-3">Game starting with @selectedPieces pieces.</p>
-        <div class="row">
-            @foreach (var idx in pieceIndices)
-            {
-                <div class="col-2 mb-3">
-                    <div class="card text-center" style="width:100px; height:140px;">
-                        <div class="card-body d-flex align-items-center justify-content-center" style="background-color:#6c757d;">
-                            <!-- Back side placeholder -->
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    }
+  @if (selectedPieces != null)
+  {
+      <p class="mt-3">Game starting with @selectedPieces pieces.</p>
+      <div class="row">
+          @foreach (var idx in pieceIndices)
+          {
+              <div class="col-2 mb-3">
+                  <div class="card text-center" style="width:100px; height:140px;">
+                      <div class="card-body d-flex align-items-center justify-content-center" style="background-color:#6c757d;" @onclick="(() => OnCardClicked(idx))">
+                          @if (openIndices.Contains(idx) || matchedIndices.Contains(idx)) { <span>@pieceValues[idx]</span> }
+                      </div>
+                  </div>
+              </div>
+          }
+      </div>
+  }
 </div>
 
-    @code {
-        private int? selectedPieces = null;
-        public bool IsGameStarted => selectedPieces.HasValue;
+@code {
+    private int? selectedPieces = null;
+    public bool IsGameStarted => selectedPieces.HasValue;
 
-        private List<int> pieceIndices = new();
+    private List<int> pieceIndices = new();
+    private List<int> pieceValues = new();
+    private List<int> openIndices = new();
+    private HashSet<int> matchedIndices = new();
 
-        private void StartGame(int count)
+    private void StartGame(int count)
+    {
+        selectedPieces = count;
+        pieceIndices = System.Linq.Enumerable.Range(0, count).ToList();
+        pieceValues = GeneratePieceValues(count);
+        openIndices.Clear();
+        matchedIndices.Clear();
+    }
+
+    private void ResetGame()
+    {
+        selectedPieces = null;
+        pieceIndices.Clear();
+        pieceValues.Clear();
+        openIndices.Clear();
+        matchedIndices.Clear();
+    }
+
+    private List<int> GeneratePieceValues(int count)
+    {
+        int pairs = count / 2;
+        var values = System.Linq.Enumerable.Range(0, pairs)
+            .SelectMany(v => new[] { v, v })
+            .ToList();
+        var rnd = new System.Random();
+        return values.OrderBy(_ => rnd.Next()).ToList();
+    }
+
+    private void OnCardClicked(int idx)
+    {
+        if (openIndices.Contains(idx) || matchedIndices.Contains(idx))
+            return;
+        openIndices.Add(idx);
+        StateHasChanged();
+        if (openIndices.Count == 2)
         {
-            selectedPieces = count;
-            pieceIndices = System.Linq.Enumerable.Range(0, count).ToList();
-        }
-
-        private void ResetGame()
-        {
-            selectedPieces = null;
-            pieceIndices.Clear();
+            var first = openIndices[0];
+            var second = openIndices[1];
+            if (pieceValues[first] == pieceValues[second])
+            {
+                matchedIndices.Add(first);
+                matchedIndices.Add(second);
+                openIndices.Clear();
+            }
+            else
+            {
+                _ = HideAfterDelay(first, second);
+            }
         }
     }
+
+    private async Task HideAfterDelay(int first, int second)
+    {
+        await Task.Delay(500);
+        openIndices.Remove(first);
+        openIndices.Remove(second);
+        StateHasChanged();
+    }
+}
