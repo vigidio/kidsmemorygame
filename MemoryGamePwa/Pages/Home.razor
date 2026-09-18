@@ -43,12 +43,13 @@
 
 @code {
     private int? selectedPieces = null;
-    public bool IsGameStarted => selectedPieces.HasValue;
+    private bool IsGameStarted => selectedPieces.HasValue;
 
     private List<int> pieceIndices = new();
     private List<int> pieceValues = new();
     private List<int> openIndices = new();
     private HashSet<int> matchedIndices = new();
+    private  Dictionary<int, int> pieceOwners = new();
 
     private int currentPlayer = 1;
     private int[] scores = new int[2];
@@ -56,7 +57,8 @@
     private void StartGame(int count)
         {
             selectedPieces = count;
-            pieceIndices = System.Linq.Enumerable.Range(0, count).ToList();
+            pieceIndices = [.. Enumerable.Range(0, count)];
+            pieceOwners.Clear();
             pieceValues = GeneratePieceValues(count);
             openIndices.Clear();
             matchedIndices.Clear();
@@ -68,9 +70,19 @@
         private string GetCardBackgroundColor(int idx)
         {
             if (matchedIndices.Contains(idx))
-                return "background-color:#28a745;";
+            {
+                var owner = pieceOwners.GetValueOrDefault(idx, 0);
+                return owner switch
+                {
+                    1 => "background-color:#3498db;", // blue for player 1
+                    2 => "background-color:#2ecc71;", // green for player 2
+                    _ => "background-color:#28a745;"    // default greenish if unknown
+                };
+            }
             else
+            {
                 return "background-color:#6c757d;";
+            }
         }
 
     private void ResetGame()
@@ -80,6 +92,7 @@
         pieceValues.Clear();
         openIndices.Clear();
         matchedIndices.Clear();
+        pieceOwners.Clear();
         currentPlayer = 1;
         scores[0] = 0;
         scores[1] = 0;
@@ -88,10 +101,10 @@
     private List<int> GeneratePieceValues(int count)
     {
         int pairs = count / 2;
-        var values = System.Linq.Enumerable.Range(0, pairs)
+        var values = Enumerable.Range(0, pairs)
             .SelectMany(v => new[] { v, v })
             .ToList();
-        var rnd = new System.Random();
+        var rnd = new Random();
         return values.OrderBy(_ => rnd.Next()).ToList();
     }
 
@@ -109,6 +122,9 @@
             {
                 matchedIndices.Add(first);
                 matchedIndices.Add(second);
+                // Assign ownership to current player before switching
+                pieceOwners[first] = currentPlayer;
+                pieceOwners[second] = currentPlayer;
                 openIndices.Clear();
                 scores[currentPlayer - 1]++;
             }
